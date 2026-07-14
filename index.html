@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Heti masszázs — foglaló</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,500;1,6..72,300&family=Karla:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root{
+    --ink:#15302B; --ink-soft:#4A6660; --paper:#DFE7E2; --paper-2:#EFF3F0;
+    --line:#BFCEC8; --amber:#B8862B; --amber-soft:#F0E2C4; --deep:#0E211E;
+    --piros:#9B2C2C; --radius:2px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;padding:0;background:var(--paper);color:var(--ink);
+    font-family:'Karla',system-ui,sans-serif;font-size:16px;line-height:1.5}
+  .wrap{max-width:760px;margin:0 auto;padding:28px 18px 64px}
+
+  header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:18px}
+  .eyebrow{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-soft);margin:0 0 6px}
+  h1{font-family:'Newsreader',serif;font-weight:300;font-size:38px;line-height:1.05;
+    margin:0 0 10px;letter-spacing:-.01em}
+  h1 em{font-style:italic}
+  .datum{font-family:'Space Mono',monospace;font-size:13px;color:var(--ink-soft);
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pill{background:var(--deep);color:var(--paper-2);padding:3px 9px;border-radius:999px;
+    font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+
+  .sav-fejlec{display:flex;justify-content:space-between;align-items:center;gap:12px;
+    margin-bottom:4px;flex-wrap:wrap}
+  .tullogas{font-size:13px;color:var(--piros);font-weight:500}
+  .tullogas.rendben{color:var(--ink-soft);font-weight:400}
+
+  .sav{display:grid;grid-template-columns:88px 1fr auto;gap:14px;align-items:center;
+    border-bottom:1px solid var(--line);padding:14px 0}
+  .sav.szunet{opacity:.62}
+  .ido{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;letter-spacing:-.02em}
+  .ido small{display:block;font-weight:400;font-size:11px;color:var(--ink-soft);letter-spacing:0}
+  .savtest{min-width:0}
+  .rud{height:8px;background:var(--amber-soft);border:1px solid var(--line);margin-bottom:7px}
+  .rud.foglalt{background:var(--deep);border-color:var(--deep)}
+  .rud.szunetrud{background:repeating-linear-gradient(45deg,var(--line),var(--line) 2px,transparent 2px,transparent 6px)}
+  .rud.kilog{border-color:var(--piros);border-style:dashed}
+  .nev{font-family:'Newsreader',serif;font-size:19px;line-height:1.2}
+  .szabad{color:var(--ink-soft);font-style:italic;font-family:'Newsreader',serif;font-size:18px}
+  .megj{font-size:13px;color:var(--ink-soft);margin-top:2px;overflow-wrap:anywhere}
+  .urlap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .urlap input{flex:1;min-width:120px;font-size:14px;padding:6px 8px}
+  .urlap .nevMezo{max-width:170px;border-color:var(--ink-soft)}
+  .gombsor{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .kerdes{font-size:13px;color:var(--piros);white-space:nowrap}
+
+  /* szerkesztő mód */
+  .szerkeszto{display:flex;gap:6px;align-items:center;margin-top:8px;flex-wrap:wrap}
+  .szerkeszto label{font-size:12px;color:var(--ink-soft)}
+  .szerkeszto input[type=number]{width:70px;padding:5px 7px;font-size:13px}
+  .ikon{background:transparent;border:1px solid var(--line);color:var(--ink-soft);
+    padding:5px 9px;font-size:13px;line-height:1}
+  .ikon:hover{color:var(--ink);border-color:var(--ink)}
+  .ikon.aktiv{background:var(--deep);color:var(--paper-2);border-color:var(--deep)}
+  .ertesites{display:flex;gap:10px;justify-content:space-between;align-items:flex-start;
+    background:#F7E8E5;border:1px solid #D9B3B3;color:#7B2222;
+    padding:12px 14px;margin-top:14px;font-size:14px;line-height:1.4}
+  .ertesites .ikon{border-color:#D9B3B3;color:#7B2222;flex-shrink:0}
+
+  input,select{font-family:'Karla',sans-serif;font-size:15px;color:var(--ink);background:#fff;
+    border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;min-width:0}
+  input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+  button{font-family:'Karla',sans-serif;font-size:14px;font-weight:500;cursor:pointer;
+    border-radius:var(--radius);padding:9px 14px;white-space:nowrap;transition:background .15s,color .15s}
+  .btn-fo{background:var(--deep);color:var(--paper-2);border:1px solid var(--deep)}
+  .btn-fo:hover{background:var(--amber);border-color:var(--amber)}
+  .btn-mas{background:transparent;color:var(--ink-soft);border:1px solid var(--line)}
+  .btn-mas:hover{color:var(--ink);border-color:var(--ink)}
+  .btn-kicsi{padding:6px 10px;font-size:13px}
+  .veszely{color:var(--piros);border-color:#D9B3B3;background:transparent}
+  .veszely:hover{background:var(--piros);color:#fff;border-color:var(--piros)}
+
+  details{margin-top:34px;border-top:1px solid var(--line);padding-top:16px}
+  summary{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-soft);cursor:pointer;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  summary::before{content:"+ "}
+  details[open] summary::before{content:"– "}
+  .beall{margin-top:18px;display:grid;gap:20px}
+  .blokk{background:var(--paper-2);border:1px solid var(--line);padding:14px}
+  .blokk h3{font-family:'Karla',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.08em;margin:0 0 4px}
+  .blokk p{font-size:13px;color:var(--ink-soft);margin:0 0 12px}
+  .mezok{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .mezok label{font-size:12px;color:var(--ink-soft);display:flex;flex-direction:column;gap:4px}
+  .mezok input[type=time]{width:118px}
+  .mezok input[type=number]{width:80px}
+
+  .lab{margin-top:30px;font-size:12px;color:var(--ink-soft);line-height:1.6}
+  .allapot{font-family:'Space Mono',monospace;font-size:11px;color:var(--ink-soft);margin-top:14px;min-height:16px}
+  .ures{padding:26px 0;font-family:'Newsreader',serif;font-style:italic;font-size:18px;color:var(--ink-soft)}
+  /* ---------- mobil ---------- */
+  @media (max-width:620px){
+    .wrap{padding:20px 14px 56px}
+    h1{font-size:28px;margin-bottom:8px}
+    header{padding-bottom:14px;margin-bottom:14px}
+
+    /* egy sáv = egy kártya, egymás alá rendezve */
+    .sav{grid-template-columns:1fr;gap:8px;padding:16px 0}
+    .ido{display:flex;align-items:baseline;gap:8px;font-size:17px}
+    .ido small{display:inline;font-size:12px}
+    .savtest{width:100%}
+    .nev{font-size:20px}
+    .szabad{font-size:17px}
+
+    /* hüvelykujjnak való gombok, teljes szélességben */
+    .gomb{width:100%}
+    .gomb button{flex:1;min-height:48px;padding:12px 14px;font-size:15px}
+    .urlap{flex-direction:column;align-items:stretch;gap:8px}
+    .urlap input,.urlap .nevMezo{max-width:none;width:100%;min-height:46px;font-size:16px}
+
+    /* szerkesztő mód: nagyobb célfelületek, tördelés */
+    .szerkeszto{gap:8px}
+    .szerkeszto input[type=number]{width:84px;min-height:42px;font-size:16px}
+    .ikon{min-height:42px;padding:8px 12px;font-size:14px}
+
+    /* beállítások: teljes szélességű mezők */
+    .sav-fejlec{flex-direction:column;align-items:stretch;gap:8px}
+    .sav-fejlec button{width:100%;min-height:44px}
+    #vegeGombok button{flex:1;min-height:44px}
+    .mezok{flex-direction:column;align-items:stretch}
+    .mezok label{width:100%}
+    .mezok input,.mezok select,.mezok button{width:100%;min-height:46px;font-size:16px}
+    .blokk .gombsor button{flex:1;min-height:44px}
+    details{margin-top:26px}
+  }
+  /* iOS: 16px alatt a beviteli mezőre ránagyít a böngésző */
+  @media (max-width:620px){ input,select{font-size:16px} }
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="ertesites" id="beallitasHiba" hidden style="margin:0 0 18px">
+    <span>Nincs beállítva az adatbázis. Nyisd meg az <code>index.html</code>-t, és írd be a Supabase URL-t és a kulcsot a fájl tetején lévő BEÁLLÍTÁS blokkba.</span>
+  </div>
+  <header>
+    <p class="eyebrow">Heti masszázs · baráti kör</p>
+    <h1>Ki <em>mikor</em> fekszik fel?</h1>
+    <div class="datum">
+      <span class="pill" id="napPill">–</span>
+      <span id="datumSzoveg">Betöltés…</span>
+    </div>
+  </header>
+
+  <div class="sav-fejlec">
+    <span class="tullogas" id="tullogas"></span>
+    <button class="btn-mas btn-kicsi" id="szerkGomb">Sávok szerkesztése</button>
+  </div>
+
+  <div id="lista"><div class="ures">Betöltés…</div></div>
+  <div class="gombsor" id="vegeGombok" hidden style="margin-top:14px">
+    <button class="btn-mas btn-kicsi" id="ujVegere">+ Sáv a végére</button>
+    <button class="btn-mas btn-kicsi" id="ujSzunetVegere">+ Szünet a végére</button>
+  </div>
+  <div class="ertesites" id="ertesites" hidden>
+    <span id="ertesitesSzoveg"></span>
+    <button class="ikon" id="ertesitesBezar" aria-label="Bezárás">×</button>
+  </div>
+  <div class="allapot" id="allapot"></div>
+
+  <details>
+    <summary>Nap, kezdés és sávok generálása</summary>
+    <div class="beall">
+
+      <div class="blokk">
+        <h3>A masszőr napja és ideje</h3>
+        <p>A sávok a kezdéstől indulnak, egymás után. A záró idő csak jelzés: ha túllógtok rajta, figyelmeztet.</p>
+        <div class="mezok">
+          <label>Nap
+            <select id="napValaszto">
+              <option value="1">hétfő</option><option value="2">kedd</option>
+              <option value="3">szerda</option><option value="4">csütörtök</option>
+              <option value="5">péntek</option><option value="6">szombat</option>
+              <option value="0">vasárnap</option>
+            </select>
+          </label>
+          <label>Kezdés<input type="time" id="napKezdes" value="15:00"></label>
+          <label>Záró idő<input type="time" id="napVege" value="20:00"></label>
+          <button class="btn-mas" id="napMent">Mentés</button>
+        </div>
+        <p style="margin:10px 0 0">A nap megváltoztatása törli az aktuális foglalásokat.</p>
+      </div>
+
+      <div class="blokk">
+        <h3>Sávok újragenerálása</h3>
+        <p>Egyforma sávokkal tölti ki a kezdés és a záró idő közti időt. Felülírja a mostani sávokat és foglalásokat.</p>
+        <div class="mezok">
+          <label>Hossz (perc)<input type="number" id="genHossz" value="45" min="10" max="180" step="5"></label>
+          <button class="btn-fo" id="genGomb">Generálás</button>
+        </div>
+        <div class="gombsor" id="genErosit" hidden style="margin-top:10px">
+          <span class="kerdes">A mostani sávok és foglalások törlődnek.</span>
+          <button class="btn-mas veszely btn-kicsi" id="genIgen">Mehet</button>
+          <button class="btn-mas btn-kicsi" id="genNem">Mégse</button>
+        </div>
+      </div>
+
+      <div class="blokk">
+        <h3>Új hét</h3>
+        <p>Törli az összes foglalást, a sávokat meghagyja.</p>
+        <div class="gombsor">
+          <button class="btn-mas veszely" id="uritGomb">Foglalások törlése</button>
+          <span class="kerdes" id="uritKerdes" hidden>Biztos?</span>
+          <button class="btn-mas veszely btn-kicsi" id="uritIgen" hidden>Igen, törlöm</button>
+          <button class="btn-mas btn-kicsi" id="uritNem" hidden>Mégse</button>
+        </div>
+      </div>
+
+    </div>
+  </details>
+
+  <p class="lab">
+    A sávok egymást követik: ha egy kezelés hosszabb lesz, az utána következők automatikusan csúsznak.
+    Az oldalt a társaság minden tagja ugyanígy látja és szerkesztheti.
+    <br><span style="font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.1em;opacity:.7">
+    Saját tárhelyen · Supabase</span>
+  </p>
+</div>
+
+<script>
+/* ==========================================================
+   BEÁLLÍTÁS — ide másold a Supabase adatait
+   (Supabase → Settings → API Keys, illetve a felső "Connect" gomb)
+   ========================================================== */
+const SUPABASE_URL   = 'https://zeeqxxekfjynmtrgsrmw.supabase.co';   // pl. https://abcdefgh.supabase.co
+const SUPABASE_KULCS = 'sb_publishable_lL3YmPlgNEb0SQzzBcx6vg_lt9ktErR'; // "Publishable key" (sb_publishable_...)
+                                                       // régi projektnél az "anon" kulcs (eyJ...) is jó
+                                                       // a "secret" / "service_role" kulcs SOHA ne kerüljön ide
+const KOZOS_JELSZO   = '';   // ha üresen hagyod, nincs jelszó. pl. 'masszazs2026'
+/* ========================================================== */
+
+const NAPOK = ['vasárnap','hétfő','kedd','szerda','csütörtök','péntek','szombat'];
+let allapot = null;
+let utolsoNev = '';
+let nyitottUrlap = null;
+let nyitottLemond = null;
+let szerkMod = false;
+
+const percbe = t => { const [h,m] = t.split(':').map(Number); return h*60+m; };
+const oraba = p => String(Math.floor(p/60)).padStart(2,'0')+':'+String(p%60).padStart(2,'0');
+const azon = () => Math.random().toString(36).slice(2,8);
+
+function kovetkezoDatum(nap){
+  const ma = new Date(); ma.setHours(0,0,0,0);
+  const d = new Date(ma);
+  d.setDate(ma.getDate() + ((nap - ma.getDay() + 7) % 7));
+  return d.toISOString().slice(0,10);
+}
+const magyarDatum = iso => { const [e,h,n] = iso.split('-'); return `${e}. ${h}. ${n}.`; };
+
+function alap(){
+  const nap = 3;
+  return { nap, datum: kovetkezoDatum(nap), kezdes:'15:00', vege:'20:00',
+    savok: [45,45,45,45,60].map(h=>({id:azon(),hossz:h})),
+    foglalasok: {} };
+}
+
+/* régi adat (fix kezdésű sávok) átalakítása láncolt idővonallá */
+function migral(a){
+  if (!a.kezdes && Array.isArray(a.savok) && a.savok.length && a.savok[0].kezd){
+    const rendezett = [...a.savok].sort((x,y)=>percbe(x.kezd)-percbe(y.kezd));
+    a.kezdes = rendezett[0].kezd;
+    const utolso = rendezett[rendezett.length-1];
+    a.vege = a.vege || oraba(percbe(utolso.kezd) + utolso.hossz);
+    a.savok = rendezett.map(s=>({ id:s.id, hossz:s.hossz }));
+  }
+  a.kezdes = a.kezdes || '15:00';
+  a.vege = a.vege || '20:00';
+  a.savok = (a.savok || []).map(s=>({ id:s.id||azon(), hossz:s.hossz, szunet:!!s.szunet }));
+  a.foglalasok = a.foglalasok || {};
+  return a;
+}
+
+/* a kezdésekből + hosszakból számolt idővonal */
+function idovonal(a){
+  let t = percbe(a.kezdes);
+  return a.savok.map(s=>{
+    const kezd = t; t += s.hossz;
+    return { ...s, kezdPerc: kezd, vegPerc: t };
+  });
+}
+
+/* --- adatbázis --- */
+const db = (SUPABASE_URL.startsWith('http'))
+  ? supabase.createClient(SUPABASE_URL, SUPABASE_KULCS)
+  : null;
+let verzio = 0;   // ütközésvédelem: csak akkor írunk, ha közben más nem írt
+
+async function betolt(){
+  const { data, error } = await db.from('foglalo')
+    .select('allapot,verzio').eq('id','fo').maybeSingle();
+  if (error) throw error;
+  if (!data){                                   // legelső indítás: létrehozzuk a sort
+    const kezdo = alap();
+    const { error: hiba } = await db.from('foglalo').insert({ id:'fo', allapot: kezdo, verzio: 1 });
+    if (hiba) throw hiba;
+    verzio = 1;
+    return kezdo;
+  }
+  verzio = data.verzio;
+  return migral(data.allapot);
+}
+
+/* csak akkor ír, ha a betöltés óta más nem módosított (különben null) */
+async function mentVerziozva(a, v){
+  const { data, error } = await db.from('foglalo')
+    .update({ allapot: a, verzio: v + 1, frissitve: new Date().toISOString() })
+    .eq('id','fo').eq('verzio', v).select('verzio');
+  if (error) throw error;
+  return (data && data.length) ? data[0].verzio : null;
+}
+
+function hetetFrissit(a){
+  const ma = new Date(); ma.setHours(0,0,0,0);
+  if (!a.datum || new Date(a.datum) < ma){
+    a.datum = kovetkezoDatum(a.nap);
+    a.foglalasok = {};
+  }
+  return a;
+}
+
+/* melyik sáv mikor kezdődik – id → kezdőperc */
+function kezdesTerkep(a){
+  const m = {}; let t = percbe(a.kezdes);
+  a.savok.forEach(s=>{ m[s.id] = t; t += s.hossz; });
+  return m;
+}
+
+/* csak azokra figyelmeztetünk, akiknek a módosítás miatt TÉNYLEG elcsúszott az időpontja */
+function csuszasok(elotte, utana, a){
+  const lista = [];
+  Object.keys(a.foglalasok).forEach(id=>{
+    if (elotte[id] === undefined || utana[id] === undefined) return;
+    if (elotte[id] !== utana[id]){
+      lista.push(`${a.foglalasok[id].nev}: ${oraba(elotte[id])} → ${oraba(utana[id])}`);
+    }
+  });
+  return lista;
+}
+
+async function modosit(fn, uzenet){
+  jelez('Mentés…');
+  for (let probal = 0; probal < 4; probal++){
+    try{
+      const friss = hetetFrissit(await betolt());
+      const sajatVerzio = verzio;
+      const elotte = kezdesTerkep(friss);
+      const regiFoglalas = { ...friss.foglalasok };
+
+      const hiba = fn(friss);
+      if (hiba){ allapot = friss; rajzol(); jelez(hiba); return; }
+
+      const ujVerzio = await mentVerziozva(friss, sajatVerzio);
+      if (ujVerzio === null){ continue; }   // közben más írt → friss adattal újra
+      verzio = ujVerzio;
+
+      const azonosFoglalas = Object.keys(friss.foglalasok).length === Object.keys(regiFoglalas).length;
+      const eltoltak = azonosFoglalas ? csuszasok(elotte, kezdesTerkep(friss), friss) : [];
+      if (eltoltak.length) ertesit('Elcsúszott időpont — szólj nekik: ' + eltoltak.join(' · '));
+
+      allapot = friss;
+      rajzol();
+      jelez(uzenet || 'Mentve.');
+      return;
+    }catch(e){
+      jelez('Nem sikerült menteni: ' + (e.message || 'hálózati hiba') + '. Próbáld újra.');
+      return;
+    }
+  }
+  jelez('Épp más is foglalt. Frissítettem az adatokat — próbáld újra.');
+  try{ allapot = hetetFrissit(await betolt()); rajzol(); }catch(e){}
+}
+const jelez = sz => { document.getElementById('allapot').textContent = sz; };
+const ertesitoSav = document.getElementById('ertesites');
+function ertesit(sz){
+  document.getElementById('ertesitesSzoveg').textContent = sz;
+  ertesitoSav.hidden = false;
+}
+document.getElementById('ertesitesBezar').onclick = () => { ertesitoSav.hidden = true; };
+
+function rajzol(){
+  const a = allapot;
+  const sorok = idovonal(a);
+  const vegPerc = percbe(a.vege);
+  const zaras = sorok.length ? sorok[sorok.length-1].vegPerc : percbe(a.kezdes);
+
+  document.getElementById('napPill').textContent = NAPOK[a.nap];
+  document.getElementById('datumSzoveg').textContent =
+    magyarDatum(a.datum) + ' · ' + Object.keys(a.foglalasok).length + ' / ' +
+    sorok.filter(s=>!s.szunet).length + ' kezelés foglalt';
+  document.getElementById('napValaszto').value = String(a.nap);
+  document.getElementById('napKezdes').value = a.kezdes;
+  document.getElementById('napVege').value = a.vege;
+
+  const tul = document.getElementById('tullogas');
+  if (zaras > vegPerc){
+    tul.className = 'tullogas';
+    tul.textContent = `Túllóg a masszőr idején: ${oraba(zaras)} a ${a.vege} helyett (+${zaras - vegPerc} perc).`;
+  } else {
+    tul.className = 'tullogas rendben';
+    tul.textContent = `${a.kezdes} – ${oraba(zaras)} · ${vegPerc - zaras} perc maradt a ${a.vege}-ig.`;
+  }
+
+  document.getElementById('szerkGomb').textContent = szerkMod ? 'Szerkesztés kész' : 'Sávok szerkesztése';
+  document.getElementById('szerkGomb').className = szerkMod ? 'btn-fo btn-kicsi' : 'btn-mas btn-kicsi';
+  document.getElementById('vegeGombok').hidden = !szerkMod;
+
+  const lista = document.getElementById('lista');
+  lista.innerHTML = '';
+  if (!sorok.length){
+    lista.innerHTML = '<div class="ures">Nincsenek sávok. Lent generálhatsz újakat, vagy szerkesztő módban adhatsz hozzá.</div>';
+    return;
+  }
+  const leghosszabb = Math.max(...sorok.map(s=>s.hossz));
+
+  sorok.forEach((s, i)=>{
+    const f = a.foglalasok[s.id];
+    const sor = document.createElement('div');
+    sor.className = 'sav' + (s.szunet ? ' szunet' : '');
+
+    const ido = document.createElement('div');
+    ido.className = 'ido';
+    ido.innerHTML = `${oraba(s.kezdPerc)}<small>${s.hossz} perc · –${oraba(s.vegPerc)}</small>`;
+
+    const test = document.createElement('div');
+    test.className = 'savtest';
+    const rud = document.createElement('div');
+    rud.className = 'rud' + (f ? ' foglalt' : '') + (s.szunet ? ' szunetrud' : '') +
+      (s.vegPerc > vegPerc ? ' kilog' : '');
+    rud.style.width = Math.round(s.hossz / leghosszabb * 100) + '%';
+    test.appendChild(rud);
+
+    const gombDiv = document.createElement('div');
+    gombDiv.className = 'gomb gombsor';
+
+    if (s.szunet){
+      const sz = document.createElement('div');
+      sz.className = 'szabad'; sz.textContent = 'szünet';
+      test.appendChild(sz);
+    } else if (f){
+      const nev = document.createElement('div');
+      nev.className = 'nev'; nev.textContent = f.nev;
+      test.appendChild(nev);
+      if (f.megj){
+        const m = document.createElement('div');
+        m.className = 'megj'; m.textContent = f.megj;
+        test.appendChild(m);
+      }
+      if (nyitottLemond === s.id){
+        const k = document.createElement('span');
+        k.className = 'kerdes'; k.textContent = 'Lemondod?';
+        const igen = document.createElement('button');
+        igen.className = 'btn-mas veszely btn-kicsi'; igen.textContent = 'Igen';
+        igen.onclick = () => { nyitottLemond = null; modosit(x=>{ delete x.foglalasok[s.id]; }, oraba(s.kezdPerc) + ' felszabadult.'); };
+        const nem = document.createElement('button');
+        nem.className = 'btn-mas btn-kicsi'; nem.textContent = 'Mégse';
+        nem.onclick = () => { nyitottLemond = null; rajzol(); };
+        gombDiv.append(k, igen, nem);
+      } else {
+        const g = document.createElement('button');
+        g.className = 'btn-mas'; g.textContent = 'Lemondás';
+        g.onclick = () => { nyitottLemond = s.id; nyitottUrlap = null; rajzol(); };
+        gombDiv.appendChild(g);
+      }
+    } else if (nyitottUrlap === s.id){
+      const urlap = document.createElement('div');
+      urlap.className = 'urlap';
+      const nevMezo = document.createElement('input');
+      nevMezo.type = 'text'; nevMezo.className = 'nevMezo';
+      nevMezo.placeholder = 'A neved'; nevMezo.autocomplete = 'name'; nevMezo.value = utolsoNev;
+      const megjMezo = document.createElement('input');
+      megjMezo.type = 'text'; megjMezo.placeholder = 'Megjegyzés (nem kötelező)';
+      const kuld = e => { if (e.key === 'Enter') rogzit(s, nevMezo.value, megjMezo.value); };
+      nevMezo.onkeydown = kuld; megjMezo.onkeydown = kuld;
+      urlap.append(nevMezo, megjMezo);
+      test.appendChild(urlap);
+      setTimeout(()=>{ nevMezo.focus(); nevMezo.select(); }, 0);
+
+      const ok = document.createElement('button');
+      ok.className = 'btn-fo'; ok.textContent = 'Rögzítem';
+      ok.onclick = () => rogzit(s, nevMezo.value, megjMezo.value);
+      const megse = document.createElement('button');
+      megse.className = 'btn-mas'; megse.textContent = 'Mégse';
+      megse.onclick = () => { nyitottUrlap = null; rajzol(); };
+      gombDiv.append(ok, megse);
+    } else {
+      const sz = document.createElement('div');
+      sz.className = 'szabad'; sz.textContent = 'szabad';
+      test.appendChild(sz);
+      const g = document.createElement('button');
+      g.className = 'btn-fo'; g.textContent = 'Foglalom';
+      g.onclick = () => { nyitottUrlap = s.id; nyitottLemond = null; rajzol(); };
+      gombDiv.appendChild(g);
+    }
+
+    /* --- szerkesztő mód: hossz, szünet, beszúrás, törlés --- */
+    if (szerkMod){
+      const szerk = document.createElement('div');
+      szerk.className = 'szerkeszto';
+
+      const cimke = document.createElement('label');
+      cimke.textContent = 'hossz:';
+      const hosszMezo = document.createElement('input');
+      hosszMezo.type = 'number'; hosszMezo.min = 5; hosszMezo.max = 180; hosszMezo.step = 5;
+      hosszMezo.value = s.hossz;
+      hosszMezo.onchange = () => {
+        const uj = Math.max(5, Number(hosszMezo.value) || s.hossz);
+        modosit(x=>{ const c = x.savok.find(v=>v.id===s.id); if (c) c.hossz = uj; },
+          `${s.hossz} → ${uj} perc.`);
+      };
+
+      const szunetGomb = document.createElement('button');
+      szunetGomb.className = 'ikon' + (s.szunet ? ' aktiv' : '');
+      szunetGomb.textContent = 'szünet';
+      szunetGomb.title = 'Sáv szünetté alakítása (nem foglalható)';
+      szunetGomb.onclick = () => modosit(x=>{
+        const c = x.savok.find(v=>v.id===s.id);
+        if (c){ c.szunet = !c.szunet; if (c.szunet) delete x.foglalasok[c.id]; }
+      }, s.szunet ? 'Újra foglalható sáv.' : 'Szünet lett belőle.');
+
+      const beszur = document.createElement('button');
+      beszur.className = 'ikon'; beszur.textContent = '+ alá';
+      beszur.title = 'Új sáv beszúrása ez alá';
+      beszur.onclick = () => modosit(x=>{
+        const idx = x.savok.findIndex(v=>v.id===s.id);
+        x.savok.splice(idx+1, 0, { id: azon(), hossz: s.hossz, szunet:false });
+      }, 'Sáv beszúrva; a későbbiek csúsztak.');
+
+      const torol = document.createElement('button');
+      torol.className = 'ikon'; torol.textContent = 'törlés';
+      torol.onclick = () => modosit(x=>{
+        x.savok = x.savok.filter(v=>v.id!==s.id);
+        delete x.foglalasok[s.id];
+      }, 'Sáv törölve; a későbbiek előrébb csúsztak.');
+
+      szerk.append(cimke, hosszMezo, szunetGomb, beszur, torol);
+      test.appendChild(szerk);
+
+    }
+
+    sor.append(ido, test, gombDiv);
+    lista.appendChild(sor);
+  });
+}
+
+function rogzit(sav, nevErtek, megj){
+  const nev = (nevErtek || '').trim();
+  if (!nev){
+    jelez('Írd be a neved a foglaláshoz.');
+    const m = document.querySelector('.nevMezo'); if (m) m.focus();
+    return;
+  }
+  utolsoNev = nev;
+  nyitottUrlap = null;
+  modosit(a=>{
+    if (a.foglalasok[sav.id]) return 'Ezt a sávot közben más lefoglalta.';
+    a.foglalasok[sav.id] = { nev, megj:(megj||'').trim(), ts: Date.now() };
+  }, `${oraba(sav.kezdPerc)} lefoglalva: ${nev}.`);
+}
+
+/* --- szerkesztő mód --- */
+document.getElementById('szerkGomb').onclick = () => {
+  szerkMod = !szerkMod; nyitottUrlap = null; nyitottLemond = null;
+  rajzol();
+  jelez(szerkMod ? 'A hossz módosítása a későbbi sávokat automatikusan elcsúsztatja.' : '');
+};
+document.getElementById('ujVegere').onclick = () =>
+  modosit(a=>{ a.savok.push({ id: azon(), hossz: 45, szunet:false }); }, 'Sáv hozzáadva a végére.');
+document.getElementById('ujSzunetVegere').onclick = () =>
+  modosit(a=>{ a.savok.push({ id: azon(), hossz: 15, szunet:true }); }, 'Szünet hozzáadva a végére.');
+
+/* --- beállítások --- */
+document.getElementById('napMent').onclick = () => {
+  const nap = Number(document.getElementById('napValaszto').value);
+  const kezdes = document.getElementById('napKezdes').value;
+  const vege = document.getElementById('napVege').value;
+  if (percbe(vege) <= percbe(kezdes)){ jelez('A záró idő legyen később a kezdésnél.'); return; }
+  modosit(a=>{
+    const napValt = a.nap !== nap;
+    a.nap = nap; a.kezdes = kezdes; a.vege = vege;
+    if (napValt){ a.datum = kovetkezoDatum(nap); a.foglalasok = {}; }
+  }, 'Mentve.');
+};
+
+const genErosit = document.getElementById('genErosit');
+document.getElementById('genGomb').onclick = () => {
+  const h = Number(document.getElementById('genHossz').value);
+  const hossz = percbe(allapot.vege) - percbe(allapot.kezdes);
+  if (!h || h > hossz){ jelez('Ilyen hosszú sáv nem fér bele a kezdés és a záró idő közé.'); return; }
+  genErosit.hidden = false;
+  jelez('Erősítsd meg a generálást.');
+};
+document.getElementById('genNem').onclick = () => { genErosit.hidden = true; jelez(''); };
+document.getElementById('genIgen').onclick = () => {
+  const h = Number(document.getElementById('genHossz').value);
+  genErosit.hidden = true;
+  modosit(a=>{
+    const db = Math.floor((percbe(a.vege) - percbe(a.kezdes)) / h);
+    a.savok = Array.from({length: db}, ()=>({ id: azon(), hossz: h, szunet:false }));
+    a.foglalasok = {};
+  }, 'Sávok újragenerálva.');
+};
+
+const uritElemek = ['uritKerdes','uritIgen','uritNem'].map(i=>document.getElementById(i));
+document.getElementById('uritGomb').onclick = () => uritElemek.forEach(e=>e.hidden=false);
+document.getElementById('uritNem').onclick = () => uritElemek.forEach(e=>e.hidden=true);
+document.getElementById('uritIgen').onclick = () => {
+  uritElemek.forEach(e=>e.hidden=true);
+  modosit(a=>{ a.foglalasok = {}; }, 'Új hét: a tábla üres.');
+};
+
+/* --- jelszókapu (csak lakat a gyerekzáron, nem valódi védelem) --- */
+function beengedes(){
+  if (!KOZOS_JELSZO) return true;
+  try{ if (localStorage.getItem('masszazs-belepve') === KOZOS_JELSZO) return true; }catch(e){}
+  const megadott = window.prompt('Közös jelszó:');
+  if (megadott === KOZOS_JELSZO){
+    try{ localStorage.setItem('masszazs-belepve', KOZOS_JELSZO); }catch(e){}
+    return true;
+  }
+  document.querySelector('.wrap').innerHTML =
+    '<p style="font-family:Newsreader,serif;font-size:22px;margin-top:40px">Hibás jelszó. Töltsd újra az oldalt.</p>';
+  return false;
+}
+
+/* --- indulás --- */
+(async function indul(){
+  if (!db){
+    document.getElementById('beallitasHiba').hidden = false;
+    document.getElementById('lista').innerHTML = '';
+    return;
+  }
+  if (!beengedes()) return;
+  try{
+    allapot = hetetFrissit(await betolt());
+    rajzol(); jelez('');
+  }catch(e){
+    document.getElementById('lista').innerHTML =
+      '<div class="ures">Nem érem el az adatbázist. Ellenőrizd a Supabase URL-t, a kulcsot és a táblát.</div>';
+    jelez(e.message || 'hiba');
+  }
+})();
+
+/* 10 másodpercenként behúzza a többiek foglalásait */
+setInterval(async () => {
+  if (!db || document.hidden || nyitottUrlap || nyitottLemond || szerkMod) return;
+  try{
+    const friss = hetetFrissit(await betolt());
+    if (JSON.stringify(friss) !== JSON.stringify(allapot)){ allapot = friss; rajzol(); }
+  }catch(e){}
+}, 10000);
+
+/* ha visszatérsz a lapra (mobilon gyakori), azonnal frissít */
+document.addEventListener('visibilitychange', async () => {
+  if (!db || document.hidden || nyitottUrlap || nyitottLemond || szerkMod) return;
+  try{
+    const friss = hetetFrissit(await betolt());
+    if (JSON.stringify(friss) !== JSON.stringify(allapot)){ allapot = friss; rajzol(); }
+  }catch(e){}
+});
+</script>
+</body>
+</html>
