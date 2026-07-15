@@ -257,7 +257,12 @@ function kovetkezoDatum(nap){
   const ma = new Date(); ma.setHours(0,0,0,0);
   const d = new Date(ma);
   d.setDate(ma.getDate() + ((nap - ma.getDay() + 7) % 7));
-  return d.toISOString().slice(0,10);
+  return isoHelyi(d);
+}
+function isoHelyi(d){
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
 }
 const magyarDatum = iso => { const [e,h,n] = iso.split('-'); return `${e}. ${h}. ${n}.`; };
 
